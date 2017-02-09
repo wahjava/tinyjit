@@ -70,7 +70,11 @@ mmapNone :: MmapOption
 mmapNone = MmapOption 0x0
 
 mmapAnon :: MmapOption
+#if defined(freebsd_HOST_OS)
+mmapAnon = MmapOption 0x1000
+#else
 mmapAnon = MmapOption 0x20
+#endif
 
 mmapPrivate :: MmapOption
 mmapPrivate = MmapOption 0x02
@@ -88,7 +92,11 @@ instance Monoid MmapOption where
 -------------------------------------------------------------------------------
 
 mapAnon, mapPrivate :: MmapFlags
+#if defined(freebsd_HOST_OS)
+mapAnon    = 0x1000
+#else
 mapAnon    = 0x20
+#endif
 mapPrivate = 0x02
 
 newtype MmapFlags = MmapFlags { unMmapFlags :: CInt }
@@ -153,8 +161,12 @@ asciz str = do
 
 extern :: String -> IO Word32
 extern name = do
+#if defined(freebsd_HOST_OS)
+  fn <- dlsym Default name
+#else
   dl <- dlopen "" [RTLD_LAZY, RTLD_GLOBAL]
   fn <- dlsym dl name
+#endif
   return $ heapPtr $ castFunPtrToPtr fn
 
 heapPtr :: Ptr a -> Word32
